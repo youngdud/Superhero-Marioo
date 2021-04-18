@@ -10,7 +10,8 @@ ObjectID man1, objject[5], enter[5], clear[3], end;
 ObjectID puzzle[9], start, start2, ori_puzzle[9];
 ObjectID quiz[3], next, next2, quiz2[3], quiz3[3];
 ObjectID man2, crush, start3, color[3], start4;
-TimerID timer1, timer2, timer3;
+TimerID timer1, timer2, timer3, timer4;
+SoundID BGM, bombsound, successsound, goodsound, badsound, entersound, endsound, appearsound;
 int manX = 550;
 int manY = 510;
 int blank = 8;
@@ -37,6 +38,12 @@ TimerID createTimer2(Second second, bool shown) {
 		showTimer(timer);
 	}
 	return timer;
+}
+
+SoundID createSound2(const char* filename, bool loop) {
+	SoundID sound = createSound(filename);
+	playSound(sound, loop);
+	return sound;
 }
 
 // 퍼즐
@@ -85,7 +92,7 @@ int	random_move() {
 
 void puzzlestart() {
 	hideObject(puzzle[blank]);
-	for (int i = 0; i < 30; i++) {
+	for (int i = 0; i < 40; i++) {
 		puzzle_move(random_move());
 	}
 }
@@ -149,6 +156,7 @@ bool quiz_answer(int i, int y) {
 void endbomb(bool success) {
 	if (success) {
 		enterScene(scene9);
+		playSound(successsound);
 		showMessage("폭탄이 너무 어려워 찍어야겠어\n색깔 둘 중 하나를 고르세요.(무조건 하나만 안 터짐)");
 		hideObject(crush);
 		stopTimer(timer1);
@@ -156,6 +164,7 @@ void endbomb(bool success) {
 	}
 	else {
 		showMessage("폭탄 폭발 ~ 실패");
+		playSound(bombsound);
 		hideObject(crush);
 		showObject(start3);
 		manY = 510;
@@ -207,6 +216,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		showObject(enter[2]);
 	}
 	if (object == enter[0]) {
+		playSound(entersound);
 		enterScene(scene2);
 		showMessage("집 모니터가 퍼즐모양으로 깨졌어요ㅠㅠ 매뤼오쒸 헬프미\n퍼즐을 푸세요!!");
 	}
@@ -221,9 +231,9 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 				showObject(puzzle[blank]);
 				enterScene(scene1);
 				showMessage("첫번째 미션 성공 ~ 다음 문제상황까지 기다리세요");
+				playSound(successsound);
 				hideObject(enter[0]);
 				showObject(clear[0]);
-				setTimer(timer2, 5.0f);
 				startTimer(timer2);
 				showTimer(timer2);
 			}
@@ -236,6 +246,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 	}
 
 	if (object == enter[1]) {
+		playSound(entersound);
 		enterScene(scene5);
 		showMessage("아파트비번이 갑자기 퀴즈로 바꼈어요.ㅠㅠ ~ 매뤼오쒸 헬프미\n퀴즈를 푸세요!!");
 	}
@@ -246,6 +257,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		}
 		if (quiz_answer(i, 1)) {
 			showMessage("정답입니다");
+			playSound(goodsound);
 			showObject(next);
 			game4 = false;
 		}
@@ -253,6 +265,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		else {
 			enterScene(scene1);
 			showMessage("오답입니다");
+			playSound(badsound);
 			showObject(start2);
 			game4 = false;
 		}
@@ -271,6 +284,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		}
 		if (quiz_answer(i, 2)) {
 			showMessage("정답입니다");
+			playSound(goodsound);
 			showObject(next2);
 			game5 = false;
 		}
@@ -278,6 +292,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		else {
 			enterScene(scene1);
 			showMessage("오답입니다");
+			playSound(badsound);
 			game5 = false;
 		}
 	}
@@ -294,6 +309,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		int i = quiz3_index(object) + 1;
 		if (quiz_answer(i, 3)) {
 			showMessage("두번째 미션 성공 ~ 다음 문제상황까지 기다리세요");
+			playSound(successsound);
 			enterScene(scene1);
 			hideObject(enter[1]);
 			showObject(clear[1]);
@@ -305,6 +321,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		else {
 			enterScene(scene1);
 			showMessage("오답입니다");
+			playSound(badsound);
 			hideObject(next2);
 			game6 = false;
 		}
@@ -317,6 +334,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 	}
 
 	if (object == enter[2]) {
+		playSound(entersound);
 		enterScene(scene8);
 		showMessage("누가 맨홀 아래에 폭탄을 던졌어요 ~ 우리 다 죽게 생겼어요우 ~ 헬프 미\n아래의 위험구역까지 가서 제거해주세요.");
 		showTimer(timer1);
@@ -324,7 +342,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 
 	if (game2) {
 		if (object == crush) {
-			manY = manY - 500;
+			manY = manY - 5;
 			locateObject(man2, scene8, manX, manY);
 
 			if (manY < 100) {
@@ -345,11 +363,14 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		int i = color_index(object);
 		if (random_bomb(i)) {
 			enterScene(scene10);
+			stopSound(BGM);
+			playSound(endsound);
 			showMessage("마지막 미션 성공 ~ 운도 좋은 나는 이 도시의 영웅, 매뤼오\n MARIIIIIIOOOOOOO!");
 			game3 = false;
 		}
 		else {
 			showMessage("폭탄 폭발 ~ 실패");
+			playSound(bombsound);
 			enterScene(scene1);
 			showObject(start4);
 			hideObject(color[0]);
@@ -377,13 +398,21 @@ void timerCallback(TimerID timer) {
 		endbomb(false);
 	}
 	if (timer == timer2) {
+		playSound(appearsound);
 		showObject(objject[1]);
 		hideTimer();
 		setTimer(timer3, 5.0f);
 	}
 	if (timer == timer3) {
+		playSound(appearsound);
 		showObject(objject[2]);
 		hideTimer();
+	}
+	if (timer == timer4) {
+		playSound(appearsound);
+		showObject(objject[0]);
+		hideTimer();
+		setTimer(timer2, 5.0f);
 	}
 }
 
@@ -411,7 +440,7 @@ int main() {
 
 // 지도
 	man1 = createObject2("face.png",scene1, 450, 530, true);
-	objject[0] = createObject2("n.png", scene1, 420, 220, true);
+	objject[0] = createObject2("n.png", scene1, 420, 220, false);
 	objject[1] = createObject2("n.png", scene1, 720, 220, false);
 	objject[2] = createObject2("n.png", scene1, 720, 520, false);
 	enter[0] = createObject2("enter.png", scene1, 420, 180, false);
@@ -421,8 +450,17 @@ int main() {
 	clear[1] = createObject2("clear.png", scene1, 720, 180, false);
 	clear[2] = createObject2("clear.png", scene1, 720, 480, false);
 	end = createObject2("end.png", scene10, 350, 10, true);
+	timer4 = createTimer2(5.0f, true);
 	timer2 = createTimer2(5.0f, false);
 	timer3 = createTimer2(5.0f, false);
+	BGM = createSound2("SuperMario.mp3", true);
+	bombsound = createSound("baam.mp3");
+	successsound = createSound("success.mp3");
+	goodsound = createSound("good.mp3");
+	badsound = createSound("bad.mp3");
+	entersound = createSound("pipe.mp3");
+	endsound = createSound("ending.mp3");
+	appearsound = createSound("appear.mp3");
 
 
 // 퀴즈
@@ -451,5 +489,7 @@ int main() {
 	}
 
 	showMessage("매뤼오쒸 ~ 도시의 문제점을 바로잡아주세요!! 느낌표를 향해 돌격!!");
+	setTimer(timer4, 5.0f);
+	startTimer(timer4);
 	startGame(scene1);
 }
